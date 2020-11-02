@@ -3249,7 +3249,7 @@ private:
     bool willCauseRecursiveResize (int w, int h)
     {
         auto newScreenBounds = Rectangle<int> (w, h).withPosition (getScreenPosition());
-        return Desktop::getInstance().getDisplays().findDisplayForRect (newScreenBounds).scale != nativeScaleFactor;
+        return Desktop::getInstance().getDisplays().getDisplayForRect (newScreenBounds)->scale != nativeScaleFactor;
     }
 
     bool isWindowSizeCorrectForPlugin (int w, int h)
@@ -3652,7 +3652,6 @@ FileSearchPath VSTPluginFormat::getDefaultLocationsToSearch()
     FileSearchPath paths;
     paths.add (WindowsRegistry::getValue ("HKEY_LOCAL_MACHINE\\Software\\VST\\VSTPluginsPath"));
     paths.addIfNotAlreadyThere (programFiles + "\\Steinberg\\VstPlugins");
-    paths.removeNonExistentPaths();
     paths.addIfNotAlreadyThere (programFiles + "\\VstPlugins");
     paths.removeRedundantPaths();
     return paths;

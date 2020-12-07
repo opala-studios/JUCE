@@ -54,6 +54,7 @@ SamplerSound::SamplerSound (const String& soundName,
 
 SamplerSound::~SamplerSound()
 {
+    DBG("DESTRUCTOR SamplerSound");
 }
 
 bool SamplerSound::appliesToNote (int midiNoteNumber)
@@ -61,9 +62,9 @@ bool SamplerSound::appliesToNote (int midiNoteNumber)
     return midiNotes[midiNoteNumber];
 }
 
-bool SamplerSound::appliesToChannel (int /*midiChannel*/)
+bool SamplerSound::appliesToChannel (int midiChannel)
 {
-    return true;
+    return midiChannel == _page;
 }
 
 //==============================================================================
@@ -77,7 +78,7 @@ bool SamplerVoice::canPlaySound (SynthesiserSound* sound)
 
 void SamplerVoice::startNote (int midiNoteNumber, float velocity, SynthesiserSound* s, int /*currentPitchWheelPosition*/)
 {
-    if (auto* sound = dynamic_cast<const SamplerSound*> (s))
+    if (auto* sound = dynamic_cast<SamplerSound*> (s))
     {
         pitchRatio = std::pow (2.0, (midiNoteNumber - sound->midiRootNote) / 12.0)
                         * sound->sourceSampleRate / getSampleRate();
@@ -90,6 +91,7 @@ void SamplerVoice::startNote (int midiNoteNumber, float velocity, SynthesiserSou
         adsr.setParameters (sound->params);
 
         adsr.noteOn();
+        sound->setIsPlaying();
     }
     else
     {
@@ -99,6 +101,11 @@ void SamplerVoice::startNote (int midiNoteNumber, float velocity, SynthesiserSou
 
 void SamplerVoice::stopNote (float /*velocity*/, bool allowTailOff)
 {
+    if (auto* playingSound = static_cast<SamplerSound*> (getCurrentlyPlayingSound().get()))
+    {
+        playingSound->setIsPlaying(false);
+    }
+
     if (allowTailOff)
     {
         adsr.noteOff();
@@ -151,11 +158,15 @@ void SamplerVoice::renderNextBlock (AudioBuffer<float>& outputBuffer, int startS
                 *outL++ += (l + r) * 0.5f;
             }
 
-            sourceSamplePosition += pitchRatio;
+            sourceSamplePosition += pitchRatio * playingSound->speed;
 
             if (sourceSamplePosition > playingSound->length)
             {
-                stopNote (0.0f, false);
+                if (playingSound->loop) {
+                    sourceSamplePosition = 0;
+                } else {
+                    stopNote (0.0f, false);
+                }
                 break;
             }
         }

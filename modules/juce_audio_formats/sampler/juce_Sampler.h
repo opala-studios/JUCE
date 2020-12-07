@@ -86,11 +86,42 @@ public:
     /** Changes the parameters of the ADSR envelope which will be applied to the sample. */
     void setEnvelopeParameters (ADSR::Parameters parametersToUse)    { params = parametersToUse; }
 
+    void setLoop(bool pLoop) { loop = pLoop; }
+
+    void setSpeed(float pSpeed) { speed = pSpeed; }
+    
+    bool getIsLooping(){return loop;};
+    
+    void setIsPlaying(bool isPlaying = true)
+    {
+        _isPlaying = isPlaying;
+    }
+
+    bool isPlaying()
+    {
+        return _isPlaying;
+    }
+    
+    float getSpeed(){return speed;};
+    
+    void setPage(int page)
+    {
+        _page = page;
+    }
+    
+    int getPage()
+    {
+        return _page;
+    }
+    
     //==============================================================================
     bool appliesToNote (int midiNoteNumber) override;
     bool appliesToChannel (int midiChannel) override;
+   
+
 
 private:
+    bool _isPlaying = false;
     //==============================================================================
     friend class SamplerVoice;
 
@@ -99,6 +130,9 @@ private:
     double sourceSampleRate;
     BigInteger midiNotes;
     int length = 0, midiRootNote = 0;
+    bool loop = false;
+    int _page = 1;
+    float speed = 1.0f;
 
     ADSR::Parameters params;
 
